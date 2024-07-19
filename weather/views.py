@@ -1,5 +1,4 @@
 from django.shortcuts import render
-
 from weather.utils.utils import main, get_translation
 import json
 from datetime import datetime
@@ -8,17 +7,20 @@ import asyncio
 with open('weather/utils/descriptions.json', encoding='utf-8') as f:
     desc = json.load(f)
 def weather_return(request):
-
+    params = request.GET.get('city')
     # Проверяем, есть ли город в запросе
-    if request.GET.get('city'):
+    if params or params=='':
         city = request.GET.get('city')
     # Проверяем, есть ли запись в сессии
-    elif request.session['last_city']:
+    elif request.session.get('last_city'):
         city = request.session['last_city']
     else:
         return render(request, 'weather/index.html', {'context': 'Введите интересующий вас город'})
     # Создаём json-файл со всеми необходимыми данными
-    data_json = asyncio.run(main(city))
+    try:
+        data_json = asyncio.run(main(city))
+    except:
+        return render(request, 'weather/index.html', {'context': 'Мы не нашли ваш город, убедитесь в корректности написания', 'city': city})
     # Проверяем, существует ли данные о городе из запроса
     if not data_json:
         return render(request, 'weather/index.html', {'context': 'Мы не нашли ваш город, убедитесь в корректности написания', 'city': city})
